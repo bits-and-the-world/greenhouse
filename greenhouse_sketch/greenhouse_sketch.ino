@@ -5,12 +5,11 @@
 #include "DHT.h"
 
 // pin settings
-int pinSdCard = 53; // Pin 10 on Arduino Uno
 int soilMoistureSensorPin = A0;
-int tempAndAirMoistureSensorPin = 48;
+int tempAndAirMoistureSensorPin = 15;
 
 // Cloud Settings
-String awaBaseUrl = "";
+String awsBaseUrl = "";
 String greenhouseEndpoint = "/greenhouse";
 
 // Time settings
@@ -75,6 +74,7 @@ void checkAndAdjustTemperature() {
     // stop fans
     fansRunning = false;
   }
+  
 }
 
 void checkSoilMoistureAndDoWatering() {
@@ -126,13 +126,11 @@ void sendDataToAWS(String sensorType, String sensorId, String sensorValue) {
 
   HTTPClient httpClient;
   httpClient.addHeader("Content-Type", "application/json");
-  httpClient.begin(awaBaseUrl + greenhouseEndpoint);
+  httpClient.begin(awsBaseUrl + greenhouseEndpoint);
   int response = httpClient.POST(payload);
   Serial.println("Response Code " + String(response));
   Serial.println(payload);
 }
-
-// Essential Function
 
 void initSerial() {
   Serial.begin(115200);
@@ -140,6 +138,9 @@ void initSerial() {
 
 void connectToWiFi() {
     WiFiManager wm;
+    WiFiManagerParameter awsBaseUrlTextbox("aws_endpoint", "AWS BaseUrl", "", 500);
+
+    wm.addParameter(&awsBaseUrlTextbox); 
     
     wm.resetSettings();
     
@@ -152,13 +153,16 @@ void connectToWiFi() {
     } 
     else {
         //if you get here you have connected to the WiFi    
-        Serial.println("connected...yeey :)");
+        Serial.println("");
+        Serial.print("Connected to WiFi: ");
+        Serial.println(wm.getWiFiSSID());
+        Serial.println("");
+        Serial.print("WiFi IP address: ");
+        Serial.println(WiFi.localIP());
+        awsBaseUrl = awsBaseUrlTextbox.getValue();
+        Serial.println("AWS Base url set to: ");
+        Serial.print(awsBaseUrl);
     }
-  
-    Serial.println("");
-    Serial.print("Connected to WiFi");
-    Serial.print("WiFi IP address: ");
-    Serial.println(WiFi.localIP());
     
     delay(500);
 }
